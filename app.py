@@ -9,28 +9,25 @@ app = Flask(__name__)
 CORS(app)  # 允许跨域，解决前端调用问题
 
 # --- 1. 数据库配置 ---
-
 MONGO_URI = os.environ.get("MONGO_URI")
 
-
+# 优化连接参数，增加重试和超时控制
 client = MongoClient(
     MONGO_URI,
     tlsCAFile=certifi.where(),
-    tlsAllowInvalidCertificates=True,  # 允许无效证书
-    connectTimeoutMS=30000,            # 延长超时时间
-    socketTimeoutMS=30000
+    serverSelectionTimeoutMS=5000, # 5秒连接不上就报错，防止进程卡死
+    connectTimeoutMS=10000
 )
 
+db = client['chixi_wheel_db']
+collection = db['messages']
+
+# 这一步非常重要：在启动时不强制阻塞，防止连接失败导致整个服务被 Render 杀掉
 try:
-    # 使用 certifi.where() 解决 Windows 下的 SSL 证书校验问题
-    client = MongoClient(MONGO_URI, tlsCAFile=certifi.where())
-    db = client['chixi_wheel_db']  # 数据库名
-    collection = db['messages']  # 表名（集合名）
-    # 测试一下是否能连通
     client.admin.command('ping')
     print("✅ 成功连接到 MongoDB Atlas！")
 except Exception as e:
-    print(f"❌ 数据库连接失败: {e}")
+    print(f"⚠️ 数据库暂时无法连接，请检查 MONGO_URI 或 IP 白名单: {e}")
 
 
 # --- 2. 路由逻辑 ---
