@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>时久&徐向暖</title>
+    <title>奥多&诺亚</title>
     <style>
         /* --- 基础背景 --- */
         body {
             margin: 0; padding: 0; width: 100vw; height: 100vh;
-            background: #222 url('./bg2.jpg') no-repeat center center fixed;
+            background: #222 url('./bg.jpg') no-repeat center center fixed;
             background-size: cover;
             font-family: 'STHeiti', sans-serif;
             overflow: hidden;
@@ -22,26 +22,64 @@
         /* --- 核心：弹出气泡样式 --- */
         .falling-dialog {
             position: absolute;
-            z-index: 10000; /* 确保在最顶层 */
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(8px);
-            padding: 12px 18px;
-            border-radius: 18px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            min-width: 80px;
-            max-width: 260px;
+            z-index: 10000;
+            width: 100px;  /* 固定的基础大小，会被 JS 随机缩放覆盖 */
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+
+            /* 内容居中显示 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 10px;
+            box-sizing: border-box;
             pointer-events: none;
-            opacity: 0;
-            /* 弹出 -> 停留 -> 消失 */
-            animation: pop-and-fade 4s ease-in-out forwards;
+
+            /* 初始状态：在屏幕下方 */
+            transform: translateY(100vh);
+            animation: bubbleRise 10s linear forwards;
         }
 
-        @keyframes pop-and-fade {
-            0% { transform: scale(0.4) translateY(20px); opacity: 0; }
-            15% { transform: scale(1.1) translateY(0); opacity: 1; }
-            25% { transform: scale(1); opacity: 1; }
-            85% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(0.8) translateY(-20px); opacity: 0; }
+        @keyframes bubbleRise {
+            0% {
+                transform: translateY(100vh) translateX(0) scale(0.6);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1; /* 快速显现 */
+            }
+            50% {
+                transform: translateY(50vh) translateX(20px) scale(1);
+            }
+            100% {
+                transform: translateY(-20vh) translateX(-10px) scale(0.8);
+                opacity: 0;
+            }
+        }
+
+        @keyframes riseUp {
+            0% {
+                transform: translateY(100vh) translateX(0) scale(0.5);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+                transform: translateY(90vh) translateX(10px) scale(1);
+            }
+            50% {
+                transform: translateY(50vh) translateX(-20px);
+            }
+            100% {
+                transform: translateY(-20vh) translateX(10px);
+                opacity: 0;
+            }
         }
 
         /* --- BGM 图标 --- */
@@ -108,12 +146,12 @@
             <div class="chat-header">
                 <div class="avatar-wrapper" id="role-left" onclick="selectRole('left')">
                     <img src="./avatar1.jpg" id="img-left" class="avatar-img">
-                    <div style="font-size:10px;">时久</div>
+                    <div style="font-size:10px;">奥多</div>
                 </div>
-                <div style="align-self: center; color: #999; font-size: 13px;">正在同步星空...</div>
+                <div style="align-self: center; color: #999; font-size: 13px;">正在同步水族馆...</div>
                 <div class="avatar-wrapper active" id="role-right" onclick="selectRole('right')">
                     <img src="./avatar2.jpg" id="img-right" class="avatar-img">
-                    <div style="font-size:10px;">徐向暖</div>
+                    <div style="font-size:10px;">诺亚</div>
                 </div>
             </div>
             <div class="message-list" id="message-list"></div>
@@ -125,7 +163,7 @@
     </div>
 
     <script>
-        const API_URL = "https://jubensha.onrender.com/api/messages";
+        const API_URL = "https://chixi-1y9t.onrender.com/api/messages";
         let currentRole = 'right';
         let displayedIds = new Set();
         let isInitialLoad = true;
@@ -142,7 +180,7 @@
                 const list = document.getElementById('message-list');
                 if (list) {
                     list.innerHTML = data.map(m => {
-                        const sideClass = (m.user === "时久") ? "bubble-left" : "bubble-right";
+                        const sideClass = (m.user === "奥多") ? "bubble-left" : "bubble-right";
                         return `<div class="chat-bubble ${sideClass}">${m.content}</div>`;
                     }).join('');
                     list.scrollTop = list.scrollHeight;
@@ -182,26 +220,43 @@
             const dialog = document.createElement('div');
             dialog.className = 'falling-dialog';
 
-            // 随机位置（避开屏幕边缘）
-            const randomTop = Math.random() * 50 + 20;
-            const randomLeft = Math.random() * 60 + 10;
-            dialog.style.top = randomTop + 'vh';
+            // 随机水平位置 (10% - 85%)
+            const randomLeft = Math.random() * 75 + 10;
             dialog.style.left = randomLeft + 'vw';
 
-            const userColor = (msg.user === "时久") ? "#ff69b4" : "#4facfe";
+            // 随机大小 (90px 到 130px)
+            const size = Math.floor(Math.random() * 40) + 90;
+            dialog.style.width = size + 'px';
+            dialog.style.height = size + 'px';
+
+            // 随机速度
+            const duration = 8 + Math.random() * 4;
+            dialog.style.animationDuration = duration + 's';
+
+            // 角色颜色判断
+            const userColor = (msg.user === "诺亚" || msg.user === "时久") ? "#ff69b4" : "#007aff";
+
             dialog.innerHTML = `
-                <div style="font-size:11px; color:${userColor}; font-weight:bold; margin-bottom:4px;">${msg.user}</div>
-                <div style="color:#333; font-size:14px;">${msg.content}</div>
+                <div style="font-size: 10px; color: ${userColor}; font-weight: bold; margin-bottom: 2px;">
+                    ${msg.user}
+                </div>
+                <div style="font-size: 11px; color: #333; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.2;">
+                    ${msg.content}
+                </div>
             `;
 
             container.appendChild(dialog);
-            setTimeout(() => dialog.remove(), 4200);
+
+            // 动画结束移除
+            setTimeout(() => {
+                if(dialog) dialog.remove();
+            }, duration * 1000);
         }
 
         async function sendMsg() {
             const content = document.getElementById('message').value;
             if(!content) return;
-            const user = (currentRole === 'right') ? "徐向暖" : "时久";
+            const user = (currentRole === 'right') ? "诺亚" : "奥多";
 
             try {
                 await fetch(API_URL, {
@@ -211,7 +266,7 @@
                 });
                 document.getElementById('message').value = '';
                 loadMessages();
-            } catch(e) { alert("星空暂时断开了，请重试"); }
+            } catch(e) { alert("水族馆暂时断开了，请重试"); }
         }
 
         function toggleMusic() {
